@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>My Library</title>
+
+  <!-- React from CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: serif;
+      background: #2b2b2b;
+      color: white;
+    }
+
+    .page {
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 40px;
+    }
+
+    .rack {
+      width: 1570px;
+      height: 300px;
+      position: relative;
+      flex-shrink: 0; 
+
+      background: linear-gradient(90deg,#7a5230,#8b5e34,#7a5230);
+      display: flex;
+      align-items: flex-end;
+      padding: 0 24px 12px 24px;
+      margin-bottom: 10px;
+
+      box-shadow:
+        inset 0 8px 12px rgba(255,255,255,0.15),
+        inset 0 -10px 12px rgba(0,0,0,0.5);
+    }
+
+    /* left vertical wood */
+    .rack::before,
+    .rack::after {
+      content: "";
+      position: absolute;
+      top: -12px;
+      width: 14px;
+      height: calc(100% + 24px);
+      background: linear-gradient(#6b4526, #8b5e34);
+    }
+
+    /* left side */
+    .rack::before {
+      left: 0;
+      width: 14px;
+      box-shadow: inset -4px 0 6px rgba(0,0,0,0.4);
+    }
+
+    /* right side */
+    .rack::after {
+      right: 0;
+      width: 14px;
+      box-shadow: inset 4px 0 6px rgba(0,0,0,0.4);
+    }
+
+
+    .spine {
+      height: 295px;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+
+      transform-origin: bottom center;   /* IMPORTANT */
+      transition: transform 0.22s ease, box-shadow 0.22s ease, z-index 0s;
+      box-shadow:
+        inset -4px 0 6px rgba(0,0,0,0.35),
+        inset 3px 0 4px rgba(255,255,255,0.15),
+        0 8px 8px rgba(0,0,0,0.3);
+    }
+
+    .spine::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(
+        to right,
+        rgba(255,255,255,0.5),
+        rgba(255,255,255,0.1)
+      );
+/*      pointer-events: none;*/
+    }
+
+   /* .spine:hover {
+      height: 410px;
+      position: relative;
+      bottom: -50px;
+      z-index: 20;
+      transform: scale(1.3) rotate(var(--tilt));
+      box-shadow:
+        inset -8px 0 10px rgba(0,0,0,0.5),
+        inset 5px 0 8px rgba(255,255,255,0.25),
+        0 28px 28px rgba(0,0,0,0.45);
+    }*/
+
+    .spine-text {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      text-align: center;
+      padding: 8px 4px;
+      height: 280px;      
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      transition: height 0.2s ease;
+    }
+
+    /*.spine:hover .spine-text {
+      height: 400px;
+    }*/
+
+    .title {
+      font-size: 13px;
+      font-weight: bold;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .author {
+      font-size: 12px;
+      margin-top: 6px;
+      opacity: 0.9;
+    }
+
+    .popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      color: black;
+    }
+
+    .popup-card {
+      width: 700px;
+      height: 500px;
+      background: #f4efe6;
+      display: flex;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+      animation: popIn 0.2s ease;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .popup-left {
+      width: 50%;
+      background: #ddd;
+    }
+
+    .popup-left img {
+      width: 100%;
+      height: 100%;
+    }
+
+    .popup-right {
+      width: 50%;
+      padding: 24px;
+      overflow-y: auto;
+      color: #333;
+    }
+
+    .popup-right h2 {
+      margin-top: 0;
+    }
+
+    .desc {
+      margin-top: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .rack-row {
+      width: 1700px;
+      display: flex;
+      align-items: center;
+    }
+
+    .rack-label {
+      width: 42px;
+      min-height: 120px;
+      padding: 6px 4px;
+
+      background: #d9c3a5;
+      color: #3b2a1a;
+      font-weight: bold;
+      font-size: 12px;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+
+      border-radius: 4px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .rack-label.left {
+      margin-right: 10px;
+    }
+
+    .rack-label.right {
+      margin-left: 10px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .header-actions button {
+      margin-left: 12px;
+      padding: 8px 14px;
+      background: #d9c3a5;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .modal {
+      background: #f4efe6;
+      padding: 24px;
+      width: 360px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .modal input,
+    .modal select {
+      padding: 8px;
+      font-size: 14px;
+    }
+
+    .shelf-tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 30px;
+      justify-content: center;
+    }
+
+    .shelf-tabs button {
+      padding: 8px 16px;
+      border: none;
+      background: #d9c3a5;
+      cursor: pointer;
+      border-radius: 4px;
+      font-weight: bold;
+      opacity: 0.6;
+    }
+
+    .shelf-tabs button.active {
+      opacity: 1;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .shelf-tab-group {
+      display: flex;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #d9c3a5;
+      opacity: 0.6;
+    }
+
+    .shelf-tab-group.active {
+      opacity: 1;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .shelf-tab {
+      padding: 8px 14px;
+      border: none;
+      background: transparent;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .shelf-gear {
+      border: none;
+      background: rgba(0,0,0,0.1);
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+
+    .shelf-gear:hover {
+      background: rgba(0,0,0,0.2);
+    }
+
+    .rack-header {
+      display: flex;
+      align-items: center;
+      font-weight: bold;
+      justify-content: center;
+      margin-top: -5px;
+      gap: 5px;
+    }
+
+    .rack-gear {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      opacity: 0.6;
+    }
+
+    .rack-gear:hover {
+      opacity: 1;
+    }
+
+    .rack-actions {
+      background: #d9c3a5;
+      display: flex;
+      gap: 6px;
+    }
+
+    .rack-actions button {
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .rack-actions button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const RACK_WIDTH = 1570;
+    const emptyBook = {
+        book: {
+          title: "",
+          isbn: "",
+          pages: "",
+          description: ""
+        },
+        authors: []
+      };
+
+    function getRackAlphabetRanges(books) {
+      if (!books.length) return [];
+      const ranges = [];
+
+      // 1) get sorted unique initials
+      const initials = [...new Set(
+        books.map(book => {
+          const parts = book.author.trim().split(/\s+/);
+          return parts[parts.length - 1][0].toUpperCase();
+        })
+      )].sort();
+
+      if(initials.length < 10) {
+        ranges.push(...initials);
+        return ranges;
+      }
+
+      // 2) compress into ranges
+      let start = initials[0];
+      let prev = initials[0];
+
+      for (let i = 1; i < initials.length; i++) {
+        const curr = initials[i];
+
+        if (curr.charCodeAt(0) === prev.charCodeAt(0) + 1) {
+          prev = curr;
+        } else {
+          ranges.push(start === prev ? start : `${start} - ${prev}`);
+          start = curr;
+          prev = curr;
+        }
+      }
+
+      ranges.push(start === prev ? start : `${start} - ${prev}`);
+
+      return ranges;
+    }
+
+    function colorFromTitle(title) {
+      let hash = 0;
+      for (let i = 0; i < title.length; i++) {
+        hash = title.charCodeAt(i) + ((hash << 5) - hash);
+      }
+
+      const hue = Math.abs(hash) % 360;
+      const bucket = Math.abs(hash) % 10;
+
+      let saturation, lightness, textColor;
+
+      if (bucket <= 5) {
+        // Mostly black
+        saturation = 30;
+        lightness = 12;
+        textColor = "#ffffff";
+      } else if (bucket <= 7) {
+        // Mostly white
+        saturation = 25;
+        lightness = 88;
+        textColor = "#000000";
+      } else {
+        // Color
+        saturation = 45;
+        lightness = 45;
+        textColor = "#ffffff";
+      }
+
+      return {
+        bg: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
+        text: textColor
+      };
+    }
+
+    function BookPopup({ book, onClose }) {
+      if (!book) return null;
+
+      return (
+        <div className="popup-overlay" onClick={onClose}>
+          <div
+            className="popup-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="popup-left">
+              <img src={`${book.coverImage}`} alt={book.title} />
+            </div>
+
+            <div className="popup-right">
+              <h2>{book.title}</h2>
+              <p><b>Author:</b> {book.author}</p>
+              <p><b>ISBN:</b> {book.isbn || "—"}</p>
+              <p><b>Pages:</b> {book.pages || "—"}</p>
+              <p><b>Status:</b> {book.isRead ? "Read" : "Unread"}</p>
+              <p className="desc">
+                {book.description || "No description yet."}
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function BookSpine({ book, width, onSelect }) {
+      const { bg, text } = colorFromTitle(book.title);
+      const tilt = (book.title.charCodeAt(0) % 3 - 1) * 0.6; 
+
+      return (
+        <div
+          className="spine"
+          style={{
+            width,
+            backgroundColor: bg,
+            color: text,
+            "--tilt": `${tilt}deg`,
+            transform: `rotate(${tilt}deg)`
+          }}
+          onClick={() => onSelect(book)}
+        >
+          <div className="spine-text">
+            <div className="title">{book.title}</div>
+            <div className="author">{book.author}</div>
+          </div>
+        </div>
+      );
+    }
+
+    function Rack({
+      rack,
+      onSelect,
+      onRackSettings,
+      onInsertRack,
+      onInsertBooks
+    }) {
+      const calculatedWidth = RACK_WIDTH / rack.books.length;
+      const spineWidth = calculatedWidth > 50 ? 50 : calculatedWidth;
+      const ranges = getRackAlphabetRanges(rack.books);
+
+      return (
+      <div className="rack-row">
+      <div className="rack-label">
+        {ranges.map(r => <div key={r}>{r}</div>)}
+      </div>  
+
+      <div className="rack-wrapper">
+        <div className="rack-header">
+          <span>{rack.rackName}</span>
+
+          <div className="rack-actions">
+            <button
+              className="rack-gear"
+              title="Insert rack above"
+              onClick={() => onInsertRack(rack)}
+            >
+              + Rack
+            </button>
+
+            <button
+              className="rack-gear"
+              title="Add books"
+              disabled={rack.isRackFull}
+              onClick={() => onInsertBooks(rack)}
+            >
+              + Book(s)
+            </button>
+
+            <button
+              className="rack-gear"
+              onClick={() => onRackSettings(rack)}
+            >
+              ⚙
+            </button>
+          </div>
+        </div>
+
+        <div className="rack">
+          {rack.books.map(book => (
+            <BookSpine
+              key={book.title}
+              book={book}
+              width={spineWidth}
+              onSelect={onSelect}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="rack-label">
+        {ranges.map(r => <div key={r}>{r}</div>)}
+      </div>
+      </div>
+      );
+    }
+
+    function AddShelfModal({ onClose }) {
+      const [name, setName] = React.useState("");
+
+      const submit = async () => {
+        await fetch('/shelf', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name })
+        });
+        onClose();
+      };
+
+      return (
+        <div className="popup-overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2>Add Shelf</h2>
+            <input
+              placeholder="Shelf name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+            />
+            <button onClick={submit}>Create</button>
+          </div>
+        </div>
+      );
+    }
+
+    function ShelfSettingsModal({ shelf, onClose, onUpdated }) {
+      const [name, setName] = React.useState(shelf.shelfName);
+      const [rackCount, setRackCount] = React.useState(shelf.rackCount);
+      const [reserved, setReserved] = React.useState(shelf.isReservedShelf);
+
+      const updateName = async () => {
+        await fetch(`/shelf/${shelf.shelfId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name })
+        });
+        onUpdated();
+      };
+
+      const updateRackCount = async () => {
+        await fetch(`/shelf/${shelf.shelfId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rack_count: rackCount })
+        });
+        onUpdated();
+      };
+
+      const toggleReserve = async () => {
+        await fetch(`/shelf/${shelf.shelfId}/reserve`, {
+          method: "PATCH"
+        });
+        setReserved(!reserved);
+        onUpdated();
+      };
+
+      return (
+        <div className="popup-overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2>Shelf Settings</h2>
+
+            <label>
+              Shelf Name
+              <input value={name} onChange={e => setName(e.target.value)} />
+              <button onClick={updateName}>Update</button>
+            </label>
+
+            <label>
+              Rack Count
+              <input
+                type="number"
+                min={rackCount}
+                value={rackCount}
+                onChange={e => setRackCount(Number(e.target.value))}
+              />
+              <button onClick={updateRackCount}>Apply</button>
+            </label>
+
+            <label className="reserve-row">
+              <span>Reserved Shelf</span>
+              <button onClick={toggleReserve}>
+                {reserved ? "Unreserve" : "Reserve"}
+              </button>
+            </label>
+          </div>
+        </div>
+      );
+    }
+
+    function AddRackModal({ onClose }) {
+      const [shelves, setShelves] = React.useState([]);
+      const [shelfId, setShelfId] = React.useState("");
+      const [name, setName] = React.useState("");
+      const [order, setOrder] = React.useState(1);
+
+      React.useEffect(() => {
+        fetch('/shelf')
+          .then(res => res.json())
+          .then(setShelves);
+      }, []);
+
+      const submit = async () => {
+        await fetch('/rack', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            shelf_id: shelfId,
+            rack_order: order,
+            name
+          })
+        });
+        onClose();
+      };
+
+      return (
+        <div className="popup-overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2>Add Rack</h2>
+
+            <select value={shelfId} onChange={e => setShelfId(e.target.value)}>
+              <option value="">Select Shelf</option>
+              {shelves.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+
+            <input
+              placeholder="Rack name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+            />
+
+            <input
+              type="number"
+              placeholder="Order"
+              value={order}
+              onChange={e => setOrder(Number(e.target.value))}
+            />
+
+            <button onClick={submit}>Create</button>
+          </div>
+        </div>
+      );
+    }
+
+    function RackSettingsModal({ rack, onClose, onUpdated }) {
+      const [name, setName] = React.useState(rack.rackName);
+      const [reserved, setReserved] = React.useState(rack.isReservedRack);
+      const [full, setFull] = React.useState(rack.isRackFull);
+
+      const updateName = async () => {
+        await fetch(`/rack/${rack.rackId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name })
+        });
+        onUpdated();
+      };
+
+      const toggleReserve = async () => {
+        await fetch(`/rack/${rack.rackId}/reserve`, { method: "PATCH" });
+        onUpdated();
+      };
+
+      const toggleFull = async () => {
+        await fetch(`/rack/${rack.rackId}/full`, { method: "PATCH" });
+        onUpdated();
+      };
+
+      return (
+        <div className="popup-overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2>Rack Settings</h2>
+
+            <label>
+              Rack Name
+              <input value={name} onChange={e => setName(e.target.value)} />
+              <button onClick={updateName}>Update</button>
+            </label>
+
+            <label>
+              Reserved
+              <button onClick={toggleReserve}>
+                {reserved ? "Unreserve" : "Reserve"}
+              </button>
+            </label>
+
+            <label>
+              Full
+              <button onClick={toggleFull}>
+                {full ? "Mark Not Full" : "Mark Full"}
+              </button>
+            </label>
+          </div>
+        </div>
+      );
+    }
+
+    function InsertRackModal({ rack, onClose, onInserted }) {
+      const [name, setName] = React.useState("");
+
+      const submit = async () => {
+        await fetch("/racks/insert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            shelf_id: rack.shelfId,
+            rack_order: rack.rackOrder,
+            name
+          })
+        });
+        onInserted();
+      };
+
+      return (
+        <div className="popup-overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h2>Insert Rack Above</h2>
+
+            <input
+              placeholder="Rack name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+            />
+
+            <button onClick={submit}>Insert</button>
+          </div>
+        </div>
+      );
+    }
+
+    function InsertBooksModal({ rack, onClose, onInserted }) {
+      const [authors, setAuthors] = React.useState([]);
+      const [books, setBooks] = React.useState([{ ...emptyBook }]);
+
+      React.useEffect(() => {
+        fetch("/author")
+          .then(res => res.json())
+          .then(setAuthors);
+      }, []);
+
+      const updateBook = (i, field, value) => {
+        const copy = [...books];
+        copy[i].book[field] = value;
+        setBooks(copy);
+      };
+
+      const addBook = () => setBooks([...books, { ...emptyBook }]);
+
+      const submit = async () => {
+        await fetch("/book/insert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            rack_id: rack.rackId,
+            books
+          })
+        });
+        onInserted();
+      };
+
+      return (
+        <div className="popup-overlay" onClick={onClose}>
+          <div className="modal large" onClick={e => e.stopPropagation()}>
+            <h2>Add Books to {rack.rackName}</h2>
+
+            {books.map((b, i) => (
+              <div key={i} className="book-form">
+                <input
+                  placeholder="Title"
+                  value={b.book.title}
+                  onChange={e => updateBook(i, "title", e.target.value)}
+                />
+
+                <select
+                  onChange={e => {
+                    const copy = [...books];
+                    if (e.target.value === "OTHER") {
+                      copy[i].authors.push({ firstName: "", lastName: "" });
+                    } else {
+                      copy[i].authors = [{ authorId: e.target.value }];
+                    }
+                    setBooks(copy);
+                  }}
+                >
+                  <option value="OTHER">Other</option>
+                  {authors.map(a => (
+                    <option key={a.id} value={a.id}>
+                      {a.first_name} {a.last_name}
+                    </option>
+                  ))}
+                </select>
+
+                {b.authors.map((a, idx) => {
+                  if (a.authorId) return null;
+
+                  return (
+                    <div key={idx} className="author-inputs">
+                      <input
+                        placeholder="First name"
+                        onChange={e => (a.firstName = e.target.value)}
+                      />
+                      <input
+                        placeholder="Last name"
+                        onChange={e => (a.lastName = e.target.value)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+
+            <button onClick={addBook}>+ Add More Book</button>
+            <button onClick={submit}>Insert Books</button>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [racks, setRacks] = React.useState({});
+      const [selectedBook, setSelectedBook] = React.useState(null);
+      const [showShelfModal, setShowShelfModal] = React.useState(false);
+      const [showRackModal, setShowRackModal] = React.useState(false);
+      const [shelves, setShelves] = React.useState([]);
+      const [activeShelfId, setActiveShelfId] = React.useState(null);
+      const [editingShelf, setEditingShelf] = React.useState(null);
+      const [editingRack, setEditingRack] = React.useState(null);
+      const [insertRackTarget, setInsertRackTarget] = React.useState(null);
+      const [insertBooksTarget, setInsertBooksTarget] = React.useState(null);
+
+      function openShelfSettings(shelf) {
+        setEditingShelf(shelf);
+      }
+
+      const fetchShelves = React.useCallback(() => {
+        fetch("/library-view")
+          .then(res => res.json())
+          .then(data => {
+            setShelves(data.shelves);
+            if (!activeShelfId && data.shelves.length) {
+              setActiveShelfId(data.shelves[0].shelfId);
+            }
+          });
+      }, [activeShelfId]);
+
+      React.useEffect(() => {
+        fetchShelves();
+      }, [fetchShelves]);
+
+      return (
+        <div className="page">
+          <div className="header">
+            <h1>My Library</h1>
+
+            <div className="header-actions">
+              <button onClick={() => setShowShelfModal(true)}>+ Add Shelf</button>
+              <button onClick={() => setShowRackModal(true)}>+ Add Rack</button>
+            </div>
+          </div>
+          <div className="shelf-tabs">
+            {shelves.map(shelf => (
+              <div
+                key={shelf.shelfId}
+                className={`shelf-tab-group ${
+                  shelf.shelfId === activeShelfId ? "active" : ""
+                }`}
+              >
+                <button
+                  className="shelf-tab"
+                  onClick={() => setActiveShelfId(shelf.shelfId)}
+                >
+                  {shelf.shelfName}
+                </button>
+
+                <button
+                  className="shelf-gear"
+                  title="Shelf settings"
+                  onClick={() => openShelfSettings(shelf)}
+                >
+                  ⚙
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {shelves
+            .filter(s => s.shelfId === activeShelfId)
+            .flatMap(s => s.racks)
+            .sort((a,b) => a.rackOrder - b.rackOrder)
+            .map(rack => (
+              <Rack
+                key={rack.rackId}
+                rack={rack}
+                onSelect={setSelectedBook}
+                onRackSettings={setEditingRack}
+                onInsertRack={setInsertRackTarget}
+                onInsertBooks={setInsertBooksTarget}
+              />
+            ))}
+
+          <BookPopup
+            book={selectedBook}
+            onClose={() => setSelectedBook(null)}
+          />
+
+          {showShelfModal && (
+            <AddShelfModal onClose={() => setShowShelfModal(false)} />
+          )}
+
+          {showRackModal && (
+            <AddRackModal onClose={() => setShowRackModal(false)} />
+          )}
+
+          {editingShelf && (
+            <ShelfSettingsModal
+              shelf={editingShelf}
+              onClose={() => setEditingShelf(null)}
+              onUpdated={fetchShelves}
+            />
+          )}
+
+          {editingRack && (
+            <RackSettingsModal
+              rack={editingRack}
+              onClose={() => setEditingRack(null)}
+              onUpdated={fetchShelves}
+            />
+          )}
+
+          {insertRackTarget && (
+            <InsertRackModal
+              rack={insertRackTarget}
+              onClose={() => setInsertRackTarget(null)}
+              onInserted={fetchShelves}
+            />
+          )}
+
+          {insertBooksTarget && !insertBooksTarget.isRackFull && (
+            <InsertBooksModal
+              rack={insertBooksTarget}
+              onClose={() => setInsertBooksTarget(null)}
+              onInserted={fetchShelves}
+            />
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root"))
+      .render(<App />);
+
+  </script>
+</body>
+</html>

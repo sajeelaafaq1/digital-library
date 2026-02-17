@@ -1,0 +1,10 @@
+# Dependencies (The actual heavy folders)
+node_modules/
+
+# Local data/logs
+data/
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
